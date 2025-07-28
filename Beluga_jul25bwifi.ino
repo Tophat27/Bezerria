@@ -114,6 +114,8 @@ void setup() {
   Serial.println("- 'restart' ou 'reset': Reinicia a ESP32");
   Serial.println("- 'wifi': Abre portal de configuração WiFi");
   Serial.println("- 'clear': Limpa a EEPROM (corrige URLs corrompidas)");
+  Serial.println("- 'server': Mostra URL atual do servidor");
+  Serial.println("- 'server http://IP:PORTA/caminho': Altera URL do servidor");
   Serial.println("==============================\n");
 }
 
@@ -138,6 +140,23 @@ void loop() {
       Serial.println("Limpando EEPROM...");
       clearEEPROM();
       Serial.println("EEPROM limpa! Reinicie para aplicar.");
+    }
+    
+    if (command.startsWith("server ")) {
+      String newServerURL = command.substring(7); // Remove "server " do início
+      if (newServerURL.length() > 0) {
+        serverURL = newServerURL;
+        saveConfig();
+        Serial.println("URL do servidor atualizada: " + serverURL);
+      } else {
+        Serial.println("Uso: server http://IP:PORTA/caminho");
+        Serial.println("Exemplo: server http://192.168.1.100:5000/temperature");
+      }
+    }
+    
+    if (command == "server") {
+      Serial.println("URL atual do servidor: " + serverURL);
+      Serial.println("Para alterar, use: server http://IP:PORTA/caminho");
     }
   }
   

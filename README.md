@@ -94,6 +94,8 @@ Via **Serial Monitor** (115200 baud):
 | `restart` ou `reset` | Reinicia a ESP32 |
 | `wifi` | Abre portal de configuração WiFi |
 | `clear` | Limpa a EEPROM (corrige URLs corrompidas) |
+| `server` | Mostra URL atual do servidor |
+| `server http://IP:PORTA/caminho` | Altera URL do servidor |
 
 ## 🔄 Como Funciona
 
@@ -124,6 +126,11 @@ Via **Serial Monitor** (115200 baud):
 - Digite `clear` no Serial Monitor
 - Digite `restart` para reiniciar
 
+### IP do servidor incorreto
+- Digite `server` para ver a URL atual
+- Digite `server http://IP_CORRETO:PORTA/caminho` para alterar
+- Exemplo: `server http://192.168.1.100:5000/temperature`
+
 ### WiFi não conecta
 - Digite `wifi` no Serial Monitor
 - Reconfigure a rede WiFi
@@ -136,6 +143,16 @@ Sensores encontrados: 1
 Conectado ao WiFi!
 IP: 192.168.1.100
 URL do servidor carregada: http://192.168.5.147:5000/temperature
+
+=== COMANDOS DISPONÍVEIS ===
+Digite no Serial Monitor:
+- 'restart' ou 'reset': Reinicia a ESP32
+- 'wifi': Abre portal de configuração WiFi
+- 'clear': Limpa a EEPROM (corrige URLs corrompidas)
+- 'server': Mostra URL atual do servidor
+- 'server http://IP:PORTA/caminho': Altera URL do servidor
+==============================
+
 Temperatura lida: 25.50°C
 HTTP Code: 200
 {"status": "success"}
@@ -162,9 +179,28 @@ delay(10000); // 10 segundos
 ```
 
 ### Alterar URL do Servidor
+
+#### Via Código
 ```cpp
 String serverURL = "http://SEU_IP:5000/temperature";
 ```
+
+#### Via Serial Monitor (Recomendado)
+1. Abra o **Serial Monitor** (115200 baud)
+2. Digite: `server` para ver a URL atual
+3. Digite: `server http://NOVO_IP:PORTA/caminho` para alterar
+
+**Exemplos:**
+```
+server http://192.168.1.100:5000/temperature
+server http://localhost:5000/temperature
+server http://127.0.0.1:8080/api/temp
+```
+
+**Vantagens:**
+- Não precisa reprogramar a ESP32
+- Configuração salva automaticamente na EEPROM
+- Funciona mesmo após queda de energia
 
 ## 📝 Notas Importantes
 
@@ -183,4 +219,4 @@ Este projeto está sob licença MIT. Veja o arquivo LICENSE para mais detalhes.
 
 ---
 
-**Desenvolvido com ❤️ para monitoramento de temperatura** 
+**Desenvolvido com Bezerr.Ia para monitoramento de temperatura** 
