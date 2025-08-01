@@ -4,7 +4,7 @@ Este projeto consiste em um sistema de monitoramento de temperatura usando ESP32
 
 ## 📁 Arquivos do Projeto
 
-- `Beluga_jul25bwifi.ino` - Código principal da ESP32 com WiFiManager
+- `Beluga_jul25bwifi.ino` - Código principal da ESP32 com WiFiManager e proteção EEPROM
 - `Beluga_jul25b.ino` - Versão simplificada sem WiFiManager
 - `Beluga_jul25b_recep.py` - Servidor Python Flask para receber dados
 
@@ -95,15 +95,47 @@ Via **Serial Monitor** (115200 baud):
 | `wifi` | Abre portal de configuração WiFi |
 | `clear` | Limpa a EEPROM (corrige URLs corrompidas) |
 | `server` | Mostra URL atual do servidor |
-| `server http://IP:PORTA/caminho` | Altera URL do servidor |
+| `server http://IP:PORTA/caminho` | Altera URL do servidor (com validação) |
+| `validate` | Valida e reconstrói configurações da EEPROM |
+
+## 🛡️ Sistema de Proteção EEPROM
+
+### Problema Resolvido
+O sistema agora inclui proteção robusta contra corrupção da EEPROM que pode ocorrer ao desconectar a ESP32 do computador e conectá-la na energia.
+
+### Funcionalidades de Proteção
+
+#### **1. Sistema de Checksum**
+- Calcula checksum da URL antes de salvar
+- Verifica integridade ao carregar
+- Detecta automaticamente corrupção da EEPROM
+
+#### **2. Validação Rigorosa de URL**
+- Verifica formato HTTP/HTTPS
+- Valida presença de IP/domínio e porta
+- Limita tamanho máximo da URL (100 caracteres)
+
+#### **3. Estrutura de Dados Melhorada**
+```
+EEPROM Layout:
+Offset 0-3:   Checksum (4 bytes)
+Offset 4-7:   Tamanho da URL (4 bytes)
+Offset 8+:    URL (caracteres)
+```
+
+#### **4. Recuperação Automática**
+- Se detectar corrupção, usa URL padrão automaticamente
+- Reconstrói configurações corrompidas
+- Logs detalhados para debug
 
 ## 🔄 Como Funciona
 
 ### ESP32 (Beluga_jul25bwifi.ino)
 1. **Inicialização**: Verifica sensores e conecta ao WiFi
-2. **Leitura**: Lê temperatura do sensor DS18B20 a cada 10 segundos
-3. **Envio**: Envia dados via HTTP POST para o servidor Python
-4. **Persistência**: Salva configurações na EEPROM
+2. **Proteção EEPROM**: Carrega configurações com validação de checksum
+3. **Leitura**: Lê temperatura do sensor DS18B20 a cada 10 segundos
+4. **Envio**: Envia dados via HTTP POST para o servidor Python
+5. **Persistência**: Salva configurações na EEPROM com proteção
 
 ### Servidor Python (Beluga_jul25b_recep.py)
 1. **Recebe**: Dados de temperatura via HTTP POST
@@ -123,7 +155,8 @@ Via **Serial Monitor** (115200 baud):
 - Verifique se o IP do servidor está correto
 
 ### URL corrompida na EEPROM
-- Digite `clear` no Serial Monitor
+- Digite `validate` no Serial Monitor para revalidar
+- Digite `clear` para limpar completamente a EEPROM
 - Digite `restart` para reiniciar
 
 ### IP do servidor incorreto
@@ -135,6 +168,12 @@ Via **Serial Monitor** (115200 baud):
 - Digite `wifi` no Serial Monitor
 - Reconfigure a rede WiFi
 
+### EEPROM Corrompida (NOVO)
+- O sistema detecta automaticamente corrupção
+- Usa URL padrão e reconstrói automaticamente
+- Digite `validate` para forçar revalidação
+- Digite `clear` para limpar completamente
+
 ## 📊 Exemplo de Saída
 
 ### Serial Monitor (ESP32)
@@ -142,7 +181,8 @@ Via **Serial Monitor** (115200 baud):
 Sensores encontrados: 1
 Conectado ao WiFi!
 IP: 192.168.1.100
-URL do servidor carregada: http://192.168.5.147:5000/temperature
+URL do servidor carregada com sucesso: http://192.168.5.147:5000/temperature
+Checksum validado: 1234
 
 === COMANDOS DISPONÍVEIS ===
 Digite no Serial Monitor:
@@ -151,11 +191,12 @@ Digite no Serial Monitor:
 - 'clear': Limpa a EEPROM (corrige URLs corrompidas)
 - 'server': Mostra URL atual do servidor
 - 'server http://IP:PORTA/caminho': Altera URL do servidor
+- 'validate': Valida e reconstrói configurações da EEPROM
 ==============================
 
 Temperatura lida: 25.50°C
-HTTP Code: 200
-{"status": "success"}
+Dados enviados com sucesso!
+Resposta do servidor: {"status": "success"}
 ```
 
 ### Console Python
@@ -199,8 +240,26 @@ server http://127.0.0.1:8080/api/temp
 
 **Vantagens:**
 - Não precisa reprogramar a ESP32
-- Configuração salva automaticamente na EEPROM
+- Configuração salva automaticamente na EEPROM com proteção
 - Funciona mesmo após queda de energia
+- Validação automática de formato
+
+## 🆕 Novas Funcionalidades
+
+### Comando `validate`
+- Valida configurações da EEPROM manualmente
+- Reconstrói automaticamente se detectar corrupção
+- Mostra logs detalhados do processo
+
+### Payload JSON Melhorado
+- Inclui timestamp usando `millis()`
+- Formatação da temperatura com 2 casas decimais
+- Estrutura: `{"temp": 25.50, "timestamp": 1234567}`
+
+### Tratamento de Erros HTTP Aprimorado
+- Verificação específica para `HTTP_CODE_OK`
+- Mensagens de erro mais claras e informativas
+- Separação entre erros HTTP e erros de rede
 
 ## 📝 Notas Importantes
 
@@ -208,6 +267,8 @@ server http://127.0.0.1:8080/api/temp
 - **Alimentação**: Use fonte de 3.3V estável
 - **Distância**: Sensor funciona até 100m com cabo adequado
 - **Persistência**: Configurações ficam salvas mesmo após queda de energia
+- **Proteção EEPROM**: Sistema robusto contra corrupção de dados
+- **Recuperação Automática**: Detecta e corrige problemas automaticamente
 
 ## 🤝 Contribuição
 
@@ -219,4 +280,4 @@ Este projeto está sob licença MIT. Veja o arquivo LICENSE para mais detalhes.
 
 ---
 
-**Desenvolvido com Bezerr.Ia para monitoramento de temperatura** 
+**Desenvolvido com Bezerr.Ia para monitoramento de temperatura com proteção avançada de dados** 
