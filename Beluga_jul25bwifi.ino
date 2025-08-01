@@ -13,7 +13,7 @@ DallasTemperature sensors(&oneWire);
 WiFiManager wifiManager;
 
 // Configurações do servidor
-String serverURL = "http://[SEU_IP]:5000/temperature";
+String serverURL = "http://192.168.5.147:5000/temperature";
 
 // Declaração antecipada do callback
 void configModeCallback(WiFiManager *myWiFiManager);
@@ -39,7 +39,7 @@ void loadConfig() {
   EEPROM.get(0, serverURL);
   if (serverURL.length() == 0 || serverURL.length() > 100) {
     Serial.println("URL inválida na EEPROM. Usando URL padrão...");
-    serverURL = "http://[SEU_IP]:5000/temperature";
+    serverURL = "http://192.168.0.10:5000/temperature";
     saveConfig(); // Salva a URL correta
   }
   Serial.println("URL do servidor carregada: " + serverURL);
